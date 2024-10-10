@@ -16,6 +16,7 @@ apps:
     plugs:
       - network
       - network-bind
+      - system-observe
 
 parts:
   python-deps:
@@ -28,13 +29,13 @@ parts:
     source: https://github.com/WebThingsIO/gateway.git
     after: [ python-deps ]
     npm-include-node: true
-    npm-node-version: 10.24.1
+    npm-node-version: 12.22.1
     build-environment:
       - npm_config_unsafe_perm: "true"
       - NODE_ENV: "dev"
       - CPPFLAGS: "$CPPFLAGS -DPNG_ARM_NEON_OPT=0"
     build-packages:
-      - autoconf
+      - automake
       - build-essential
       - libbluetooth-dev
       - libboost-python-dev
@@ -48,4 +49,9 @@ parts:
       craftctl default
       npm install --only-dev
       npm run-script build
-      cp -av build $CRAFT_PART_INSTALL/lib/node_modules/webthings-gateway/
+      cp -avf build $CRAFT_PART_INSTALL/lib/node_modules/webthings-gateway/
+      # fix wrongly hardcoded /usr/bin/python interpreter in pagekite
+      if [ -e $CRAFT_PART_INSTALL/lib/node_modules/webthings-gateway/pagekite.py ]; then
+        sed -i 's;#!.*;#! /usr/bin/env python3;' \
+            $CRAFT_PART_INSTALL/lib/node_modules/webthings-gateway/pagekite.py
+      fi
